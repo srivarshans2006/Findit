@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Claims | FindIt</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+        body {
+            background: #f4f7fb;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: #182848;
+        }
+
+        .navbar-brand,
+        .nav-link {
+            color: white !important;
+        }
+
+        .page-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .claim-card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .approved {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .rejected {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .btn-approve {
+            background: #198754;
+            color: white;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+            FindIt
+        </a>
+
+        <div class="ms-auto d-flex gap-3 align-items-center">
+            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+            <a class="nav-link" href="{{ url_for('my_claims') }}">My Claims</a>
+
+            <form action="{{ url_for('logout') }}" method="POST">
+                <button class="btn btn-outline-light btn-sm" type="submit">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<main class="page-container">
+    <h2 class="fw-bold mb-2">Review Claim Requests</h2>
+    <p class="text-secondary mb-4">
+        Review student requests for found items and approve or reject them.
+    </p>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if claims %}
+        {% for claim in claims %}
+            <div class="claim-card">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <h5 class="fw-bold">{{ claim.item.name }}</h5>
+
+                    <span class="status
+                        {% if claim.status == 'Pending' %}pending
+                        {% elif claim.status == 'Approved' %}approved
+                        {% else %}rejected{% endif %}">
+                        {{ claim.status }}
+                    </span>
+                </div>
+
+                <p class="mb-1">
+                    <strong>Item type:</strong> {{ claim.item.type }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Location:</strong> {{ claim.item.location }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Reported by:</strong> {{ claim.item.reporter.name }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Claimed by:</strong> {{ claim.claimant.name }}
+                    ({{ claim.claimant.email }})
+                </p>
+
+                <p class="mb-3">
+                    <strong>Claim message:</strong><br>
+                    {{ claim.message }}
+                </p>
+
+                
+{% if claim.status == 'Pending' %}
+    <div class="d-flex gap-2">
+        <form
+            action="{{ url_for('review_claim', claim_id=claim.id) }}"
+            method="POST"
+        >
+            <input type="hidden" name="decision" value="Approve">
+            <button class="btn btn-approve" type="submit">
+                Approve
+            </button>
+        </form>
+
+        <form
+            action="{{ url_for('review_claim', claim_id=claim.id) }}"
+            method="POST"
+        >
+            <input type="hidden" name="decision" value="Reject">
+            <button class="btn btn-reject" type="submit">
+                Reject
+            </button>
+        </form>
+    </div>
+
+{% elif claim.status == 'Approved' and claim.item.status == 'Claimed' %}
+    <form
+        action="{{ url_for('mark_item_returned', claim_id=claim.id) }}"
+        method="POST"
+        onsubmit="return confirm('Confirm that the item has been handed over?');"
+    >
+        <button class="btn btn-primary" type="submit">
+            Mark as Returned
+        </button>
+    </form>
+
+{% elif claim.status == 'Approved' and claim.item.status == 'Returned' %}
+    <span class="badge bg-success">
+        Item Returned
+    </span>
+{% endif %}
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="claim-card text-center">
+            <h5>No claim requests yet</h5>
+            <p class="text-secondary mb-0">
+                Student claim requests will appear here.
+            </p>
+        </div>
+    {% endif %}
+</main>
+
+</body>
+</html>
