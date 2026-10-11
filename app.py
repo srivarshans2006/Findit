@@ -19,10 +19,10 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "dev-only-change-this-before-deployment"
 )
-database_path = os.environ.get("DATABASE_PATH")
+database_url = os.environ.get("DATABASE_URL")
 
-if database_path:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + database_path
+if database_url:
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 else:
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///findit.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
