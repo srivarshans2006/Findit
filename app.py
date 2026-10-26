@@ -5,7 +5,7 @@ from functools import wraps
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, abort
+    flash, abort,jsonify
 )
 from flask_login import (
     LoginManager, current_user, login_user, logout_user, login_required
@@ -58,6 +58,36 @@ def home():
         select(Item).order_by(Item.created_at.desc())
     ).all()
     return render_template("index.html", items=items)
+
+@app.route("/api/items", methods=["GET"])
+def api_get_items():
+    items = db.session.scalars(
+        select(Item).order_by(Item.created_at.desc())
+    ).all()
+
+    items_data = []
+
+    for item in items:
+        items_data.append({
+            "id": item.id,
+            "name": item.name,
+            "category": item.category,
+            "location": item.location,
+            "description": item.description,
+            "type": item.type,
+            "status": item.status,
+            "user_id": item.user_id,
+            "created_at": (
+                item.created_at.isoformat()
+                if item.created_at else None
+            )
+        })
+
+    return jsonify({
+        "success": True,
+        "count": len(items_data),
+        "items": items_data
+    })
 
 
 @app.route("/register", methods=["GET", "POST"])
